@@ -27,9 +27,10 @@ apiServer.configure(function() {
 	apiServer.use(express.errorHandler());
 });
 apiServer.get("/register", function(req, res) {
-	var scoutId = parseInt(req.query.number, 10) - 1;
+	var scoutId = parseInt(req.query.scout_id, 10) - 1;
 	var eventId = req.query.event_id;
-	if (scoutId == NaN || eventId == null) {
+
+	if (isNaN(scoutId) || eventId == null) {
 		res.jsonp(400, {"error": "missing number or event_id"});
 	} else {
 		var handleTBAData = function(matchData) {
@@ -43,8 +44,8 @@ apiServer.get("/register", function(req, res) {
 					}
 				}
 				scoutInfo.push({
-					"matchNumber": match.match_number,
-					"robotNumber": team.substr(3),
+					"match_number": match.match_number,
+					"team_number": parseInt(team.substr(3), 10),
 					"color": color
 				});
 			});
@@ -67,7 +68,35 @@ apiServer.get("/register", function(req, res) {
 	}
 });
 apiServer.post("/match", function(req, res) {
-	res.jsonp(req.body);
+	var data = {};
+	for (prop in req.body) {
+		data[prop] = JSON.parse(req.body[prop]);
+	}
+	var statementString = "INSERT INTO actions (";
+	var columns = "action value x y time event_id team_number match_number".split(" ")
+	statementString += columns.join(", ");
+	statementString += ") VALUES (";
+	statementString += columns.map(function(column) {
+		return "$" + column;
+	}).join(", ");
+	statementString += ")";
+	statement = db.prepare(statementString);
+	console.log(statementString);
+	databaseArray = [];
+	data.actions.forEach(function(action) {
+		newAction = {};
+		for (prop in action) {
+			newAction["$" + prop] = action[prop];
+		}
+		"event_id team_number match_number".split(" ").forEach(function(prop) {
+			newAction["$" + prop] = data[prop];
+		});
+		databaseArray.push(newAction);
+	});
+	databaseArray.forEach(function(thing) {
+		statement.run(thing);
+	});
+	res.jsonp({"error": null});
 });
 
 var app = express();
@@ -76,5 +105,7 @@ app.configure(function() {
 	app.use("/api", apiServer);
 });
 
-l("listening on 80");
-app.listen(80);
+db.run('CREATE TABLE IF NOT EXISTS "actions" ("id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "event_id" varchar(255), "action" varchar(255), "value" varchar(255), "time" integer, "x" integer, "y" integer, "team_number" integer, "match_number" integer);', function() {
+	l("listening on 80");
+	app.listen(80);
+});
