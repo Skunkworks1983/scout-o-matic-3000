@@ -1,0 +1,13 @@
+{
+  "name": "scout-o-matic-3000",
+  "version": "0.0.1",
+  "description": "Scout-o-Matic 3000",
+  "main": "scout.js",
+  "author": "Mark Old",
+  "license": "MIT",
+  "dependencies": {
+    "sqlite3": "~2.2.0",
+    "express": "~3.4.8",
+    "request": "~2.33.0"
+  }
+}

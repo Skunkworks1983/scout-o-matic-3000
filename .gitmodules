@@ -1,0 +1,3 @@
+[submodule "freezing-octo-wallhack"]
+	path = freezing-octo-wallhack
+	url = https://github.com/Skunkworks1983/freezing-octo-wallhack.git
