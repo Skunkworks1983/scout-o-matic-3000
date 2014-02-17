@@ -10,7 +10,7 @@ var tba = function(endpoint, options, callback) {
 	request.get({
 		"url": "http://www.thebluealliance.com/api/v1" + endpoint + "?" + qs.stringify(options),
 		"headers": {
-			"X-TBA-App-Id": "1983:scout-o-matic-3000:v2"
+			"X-TBA-App-Id": "1983:scout-o-matic-3000:v2" // sigh
 		}
 	}, function(err, res, body) {
 		if (err) throw err;
@@ -21,17 +21,19 @@ var tba = function(endpoint, options, callback) {
 var l = function() { console.log.apply(console, arguments) };
 
 var apiServer = express();
+
 apiServer.configure(function() {
 	apiServer.use(express.logger("dev"));
 	apiServer.use(express.bodyParser());
 	apiServer.use(express.errorHandler());
 });
+
 apiServer.get("/register", function(req, res) {
 	var scoutId = parseInt(req.query.scout_id, 10) - 1;
 	var eventId = req.query.event_id;
 
 	if (isNaN(scoutId) || eventId == null) {
-		res.jsonp(400, {"error": "missing number or event_id"});
+		res.jsonp(400, { "error": "missing number or event_id" });
 	} else {
 		var handleTBAData = function(matchData) {
 			scoutInfo = [];
@@ -54,7 +56,7 @@ apiServer.get("/register", function(req, res) {
 		if (cachedTBAData[eventId] == null) {
 			tba("/event/details", { "event": eventId }, function(eventData) {
 				if (eventData == null) {
-					res.jsonp(400, {"error": "TBA returned null"});
+					res.jsonp(400, { "error": "TBA returned null for " + eventId });
 				} else {
 					tba("/match/details", { "matches": eventData.matches.join(",") }, function(matchData) {
 						cachedTBAData[eventId] = matchData;
@@ -67,6 +69,7 @@ apiServer.get("/register", function(req, res) {
 		}
 	}
 });
+
 apiServer.post("/match", function(req, res) {
 	var data = {};
 	for (prop in req.body) {
@@ -81,7 +84,6 @@ apiServer.post("/match", function(req, res) {
 	}).join(", ");
 	statementString += ")";
 	statement = db.prepare(statementString);
-	console.log(statementString);
 	databaseArray = [];
 	data.actions.forEach(function(action) {
 		newAction = {};
@@ -100,7 +102,9 @@ apiServer.post("/match", function(req, res) {
 });
 
 var app = express();
+
 app.configure(function() {
+	// app.use(express.logger("dev"));
 	app.use("/", express.static(__dirname + "/freezing-octo-wallhack"));
 	app.use("/api", apiServer);
 });
