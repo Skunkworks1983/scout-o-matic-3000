@@ -6,6 +6,9 @@ var qs = require("querystring");
 
 var cachedTBAData = {};
 
+// var fs = require("fs");
+// cachedTBAData["2013wase"] = JSON.parse(fs.readFileSync("./2013wase.json"));
+
 var tba = function(endpoint, options, callback) {
 	request.get({
 		"url": "http://www.thebluealliance.com/api/v1" + endpoint + "?" + qs.stringify(options),
