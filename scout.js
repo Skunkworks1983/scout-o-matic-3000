@@ -112,7 +112,8 @@ app.configure(function() {
 	app.use("/api", apiServer);
 });
 
+var port = Number(process.env.PORT || 8080);
 db.run('CREATE TABLE IF NOT EXISTS "actions" ("id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "event_id" varchar(255), "action" varchar(255), "value" varchar(255), "time" integer, "x" integer, "y" integer, "team_number" integer, "match_number" integer);', function() {
-	l("listening on 80");
-	app.listen(80);
+	l("listening on " + port);
+	app.listen(port);
 });
