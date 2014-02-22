@@ -8,7 +8,6 @@ var connectionString = process.env.DATABASE_URL || "postgres://test:12345@localh
 var db = new pg.Client(connectionString);
 
 var cachedTBAData = {};
-// cachedTBAData["2013wase"] = JSON.parse(fs.readFileSync("./2013wase.json"));
 
 var tba = function(endpoint, options, callback) {
 	request.get({
@@ -111,6 +110,19 @@ app.configure(function() {
 var port = parseInt(process.env.PORT, 10) || 8080;
 db.connect(function(err) {
 	if (err) return console.error("CRAZY SHIT HAPPENED at " + connectionString, err);
-	l("listening on " + port);
-	app.listen(port);
+	fs.readdir("./event_data", function(err, files) {
+		if (err) return console.error("COULDN'T STAT DIR ./event_data", err);
+		var count = 0;
+		files.forEach(function(file) {
+			fs.readFile("./event_data/" + file, "utf-8", function(err, data) {
+				if (err) return console.error("COULDN'T READ FILE./event_data/" + file, err);
+				cachedTBAData = JSON.parse(data);
+				console.log(file + " loaded from cache");
+				if (++count === files.length) {
+					l("listening on " + port);
+					app.listen(port);
+				}
+			});
+		});
+	});
 });

@@ -20,7 +20,6 @@ var getData = function(eventId, cb) {
             cb(new Error("TBA returned null for " + eventId));
         } else {
             tba("/match/details", { "matches": eventData.matches.join(",") }, function(matchData) {
-                cachedTBAData[eventId] = matchData;
                 cb(matchData);
             });
         }
