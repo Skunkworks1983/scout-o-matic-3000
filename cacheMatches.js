@@ -1,10 +1,6 @@
-var sqlite = require("sqlite3").verbose();
-var db = new sqlite.Database("scout.sqlite");
-var express = require("express");
 var request = require("request");
 var qs = require("querystring");
-
-var cachedTBAData = {};
+var fs = require("fs");
 
 var tba = function(endpoint, options, callback) {
     request.get({
@@ -21,7 +17,7 @@ var tba = function(endpoint, options, callback) {
 var getData = function(eventId, cb) {
     tba("/event/details", { "event": eventId }, function(eventData) {
         if (eventData == null) {
-            res.jsonp(400, { "error": "TBA returned null for " + eventId });
+            cb(new Error("TBA returned null for " + eventId));
         } else {
             tba("/match/details", { "matches": eventData.matches.join(",") }, function(matchData) {
                 cachedTBAData[eventId] = matchData;
@@ -31,6 +27,13 @@ var getData = function(eventId, cb) {
     });
 };
 
-getData("2013wase", function(data) {
-    console.log(JSON.stringify(data));
+var events = process.argv.slice(2);
+if (events.length === 0) throw "Need more args";
+events.forEach(function(event) {
+    getData(event, function(data) {
+        fs.writeFile("event_data/" + event + ".json", JSON.stringify(data), "utf-8", function(err) {
+            if (err) console.log(err);
+            console.log("finished " + event + " to event_data/" + event + ".json");
+        });
+    });
 });
