@@ -12,7 +12,9 @@
   "dependencies": {
     "sqlite3": "~2.2.0",
     "express": "~3.4.8",
-    "request": "~2.33.0"
+    "request": "~2.33.0",
+    "pg": "~2.11.1",
+    "db-migrate": "~0.6.4"
   },
   "engines": {
     "node": "0.10.x"
