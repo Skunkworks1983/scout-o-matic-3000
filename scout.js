@@ -114,15 +114,17 @@ db.connect(function(err) {
 		if (err) return console.error("COULDN'T STAT DIR ./event_data", err);
 		var count = 0;
 		files.forEach(function(file) {
-			fs.readFile("./event_data/" + file, "utf-8", function(err, data) {
-				if (err) return console.error("COULDN'T READ FILE./event_data/" + file, err);
-				cachedTBAData = JSON.parse(data);
-				console.log(file + " loaded from cache");
-				if (++count === files.length) {
-					l("listening on " + port);
-					app.listen(port);
-				}
-			});
+			if (file !== ".keep") {
+				fs.readFile("./event_data/" + file, "utf-8", function(err, data) {
+					if (err) return console.error("COULDN'T READ FILE./event_data/" + file, err);
+					cachedTBAData = JSON.parse(data);
+					console.log(file + " loaded from cache");
+					if (++count === files.length) {
+						l("listening on " + port);
+						app.listen(port);
+					}
+				});
+			}
 		});
 	});
 });
