@@ -1,12 +1,13 @@
-var sqlite = require("sqlite3").verbose();
-var db = new sqlite.Database("scout.sqlite");
 var express = require("express");
 var request = require("request");
 var qs = require("querystring");
+var pg = require("pg").native;
+var fs = require("fs");
+
+var connectionString = process.env.DATABASE_URL || "postgres://test:12345@localhost/actions";
+var db = new pg.Client(connectionString);
 
 var cachedTBAData = {};
-
-// var fs = require("fs");
 // cachedTBAData["2013wase"] = JSON.parse(fs.readFileSync("./2013wase.json"));
 
 var tba = function(endpoint, options, callback) {
@@ -19,7 +20,7 @@ var tba = function(endpoint, options, callback) {
 		if (err) throw err;
 		callback(JSON.parse(body));
 	});
-}
+};
 
 var l = function() { console.log.apply(console, arguments) };
 
@@ -75,31 +76,26 @@ apiServer.get("/register", function(req, res) {
 
 apiServer.post("/match", function(req, res) {
 	var data = {};
-	for (prop in req.body) {
+	for (prop in req.body) { // fix this
 		data[prop] = JSON.parse(req.body[prop]);
 	}
-	var statementString = "INSERT INTO actions (";
-	var columns = "action value x y time event_id team_number match_number".split(" ")
-	statementString += columns.join(", ");
-	statementString += ") VALUES (";
-	statementString += columns.map(function(column) {
-		return "$" + column;
-	}).join(", ");
-	statementString += ")";
-	statement = db.prepare(statementString);
 	databaseArray = [];
 	data.actions.forEach(function(action) {
-		newAction = {};
-		for (prop in action) {
-			newAction["$" + prop] = action[prop];
-		}
-		"event_id team_number match_number".split(" ").forEach(function(prop) {
-			newAction["$" + prop] = data[prop];
+		statementData = [];
+		"action|value|x|y|time".split("|").forEach(function(prop) {
+			statementData.push(action[prop]);
 		});
-		databaseArray.push(newAction);
+		"event_id|team_number|match_number|scout_number|scout_name".split("|").forEach(function(prop) {
+			statementData.push(data[prop]);
+		});
+		databaseArray.push(statementData);
 	});
 	databaseArray.forEach(function(thing) {
-		statement.run(thing);
+		statement = db.query({
+			"name": "insertQuery",
+			"text": "INSERT INTO actions (action, value, x, y, time, event_id, team_number, match_number, scout_number, scout_name) VALUES ($1, $2, $3, $4, to_timestamp($5), $6, $7, $8, $9, $10)",
+			"values": thing
+		});
 	});
 	res.jsonp({"error": null});
 });
@@ -112,8 +108,9 @@ app.configure(function() {
 	app.use("/api", apiServer);
 });
 
-var port = Number(process.env.PORT || 8080);
-db.run('CREATE TABLE IF NOT EXISTS "actions" ("id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "event_id" varchar(255), "action" varchar(255), "value" varchar(255), "time" integer, "x" integer, "y" integer, "team_number" integer, "match_number" integer);', function() {
+var port = parseInt(process.env.PORT, 10) || 8080;
+db.connect(function(err) {
+	if (err) return console.error("CRAZY SHIT HAPPENED at " + connectionString, err);
 	l("listening on " + port);
 	app.listen(port);
 });
