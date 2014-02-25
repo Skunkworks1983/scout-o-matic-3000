@@ -1,27 +1,12 @@
 var express = require("express");
-var request = require("request");
-var qs = require("querystring");
 var pg = require("pg").native;
-var fs = require("fs");
+
+var cache = require("./tba.js");
+
+var l = function() { console.log.apply(console, arguments) };
 
 var connectionString = process.env.DATABASE_URL || "postgres://test:12345@localhost/actions";
 var db = new pg.Client(connectionString);
-
-var cachedTBAData = {};
-
-var tba = function(endpoint, options, callback) {
-	request.get({
-		"url": "http://www.thebluealliance.com/api/v1" + endpoint + "?" + qs.stringify(options),
-		"headers": {
-			"X-TBA-App-Id": "1983:scout-o-matic-3000:v2" // sigh
-		}
-	}, function(err, res, body) {
-		if (err) throw err;
-		callback(JSON.parse(body));
-	});
-};
-
-var l = function() { console.log.apply(console, arguments) };
 
 var apiServer = express();
 
@@ -38,7 +23,8 @@ apiServer.get("/register", function(req, res) {
 	if (isNaN(scoutId) || eventId == null) {
 		res.jsonp(400, { "error": "missing number or event_id" });
 	} else {
-		var handleTBAData = function(matchData) {
+		cache.cacheData(eventId, function(err) {
+			matchData = cache.events[eventId];
 			scoutInfo = [];
 			matchData.forEach(function(match) {
 				var team = match.team_keys[scoutId];
@@ -55,21 +41,7 @@ apiServer.get("/register", function(req, res) {
 				});
 			});
 			res.jsonp(scoutInfo);
-		};
-		if (cachedTBAData[eventId] == null) {
-			tba("/event/details", { "event": eventId }, function(eventData) {
-				if (eventData == null) {
-					res.jsonp(400, { "error": "TBA returned null for " + eventId });
-				} else {
-					tba("/match/details", { "matches": eventData.matches.join(",") }, function(matchData) {
-						cachedTBAData[eventId] = matchData;
-						handleTBAData(matchData);
-					});
-				}
-			});
-		} else {
-			handleTBAData(cachedTBAData[eventId]);
-		}
+		});
 	}
 });
 
@@ -109,22 +81,10 @@ app.configure(function() {
 
 var port = parseInt(process.env.PORT, 10) || 8080;
 db.connect(function(err) {
-	if (err) return console.error("CRAZY SHIT HAPPENED at " + connectionString, err);
-	fs.readdir("./event_data", function(err, files) {
-		if (err) return console.error("COULDN'T STAT DIR ./event_data", err);
-		var count = 0;
-		files.forEach(function(file) {
-			if (file !== ".keep") {
-				fs.readFile("./event_data/" + file, "utf-8", function(err, data) {
-					if (err) return console.error("COULDN'T READ FILE./event_data/" + file, err);
-					cachedTBAData = JSON.parse(data);
-					console.log(file + " loaded from cache");
-					if (++count === files.length) {
-						l("listening on " + port);
-						app.listen(port);
-					}
-				});
-			}
-		});
+	if (err) throw err;
+	cache.loadCache(function(err) {
+		if (err) throw err;
+		l("listening on " + port);
+		app.listen(port);
 	});
 });
