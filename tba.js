@@ -65,24 +65,21 @@ var loadCache = module.exports.loadCache = function(callback) {
         fs.readdir("./" + folder, function(err, files) {
             if (err) return callback(err);
             var count = 0;
-            if (files.length === 0) {
-                callback(null);
-            } else {
-                files.forEach(function(file) {
-                    var eventId = jsonMatch.exec(file);
-                    if (eventId != null && eventId[1] + ".json" === file) {
-                        eventId = eventId[1];
-                        fs.readFile("./" + folder + "/" + file, "utf-8", function(err, data) {
-                            if (err) return callback(err);
-                            events[eventId] = JSON.parse(data); // if this fails you're dumb something bigger is wrong
-                            console.log(file + " loaded from cache");
-                            if (++count === files.length) {
-                                callback(null);
-                            }
-                        });
-                    }
-                });
-            }
+            if (files.length === 0) return callback(null);
+            files.forEach(function(file) {
+                var eventId = jsonMatch.exec(file);
+                if (eventId != null && eventId[1] + ".json" === file) {
+                    eventId = eventId[1];
+                    fs.readFile("./" + folder + "/" + file, "utf-8", function(err, data) {
+                        if (err) return callback(err);
+                        events[eventId] = JSON.parse(data); // if this fails you're dumb something bigger is wrong
+                        console.log(file + " loaded from cache");
+                        if (++count === files.length) {
+                            callback(null);
+                        }
+                    });
+                }
+            });
         });
     });
 };
