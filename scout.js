@@ -24,6 +24,7 @@ apiServer.get("/register", function(req, res) {
 		res.jsonp(400, { "error": "missing number or event_id" });
 	} else {
 		cache.cacheData(eventId, function(err) {
+			if (err) console.log(err);
 			matchData = cache.events[eventId];
 			scoutInfo = [];
 			matchData.forEach(function(match) {

@@ -45,14 +45,17 @@ var makeTheDirAlready = function(dirname, callback) {
 };
 
 var cacheData = module.exports.cacheData = function(eventId, callback) {
+    console.log("attempting to cache " + eventId);
     if (events[eventId]) return callback(null);
     getData(eventId, function(err, data) {
+        console.log("got data for " + eventId);
+        events[eventId] = data; // do this early
         if (err) return callback(err);
         makeTheDirAlready("./" + folder, function(err) {
+            if (err) return callback(err);
             fs.writeFile("./" + folder + "/" + eventId + ".json", JSON.stringify(data), "utf-8", function(err) {
                 if (err) return callback(err);
                 console.log("cached " + eventId + " to " + folder + "/" + eventId + ".json");
-                events[eventId] = data;
                 return callback(null);
             });
         });
