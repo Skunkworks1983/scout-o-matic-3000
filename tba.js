@@ -15,7 +15,7 @@ var tba = module.exports.tba = function(endpoint, options, callback) {
     }, function(err, res, body) {
         var data = (err == null) ? JSON.parse(body) : null;
         if (err == null && data == null) err = new Error("TBA returned null");
-        callback(err, data);
+        return callback(err, data);
     });
 };
 
@@ -23,7 +23,7 @@ var getData = function(eventId, callback) {
     tba("/event/details", { "event": eventId }, function(err, eventData) {
         if (err) return callback(err, null);
         tba("/match/details", { "matches": eventData.matches.join(",") }, function(err, matchData) {
-            callback(err, matchData);
+            return callback(err, matchData);
         });
     });
 };
@@ -33,13 +33,14 @@ var makeTheDirAlready = function(dirname, callback) {
         if (errTheImportantOne) {
             if (errTheImportantOne.code === "ENOENT") {
                 fs.mkdir("./" + dirname, function(err) {
-                    callback(err);
+                    return callback(err);
                 });
             } else {
-                callback(errTheImportantOne);
+                return callback(errTheImportantOne);
             }
+        } else {
+            return callback(null);
         }
-        callback(null);
     });
 };
 
@@ -64,22 +65,27 @@ var loadCache = module.exports.loadCache = function(callback) {
         if (err) return callback(err);
         fs.readdir("./" + folder, function(err, files) {
             if (err) return callback(err);
-            var count = 0;
-            if (files.length === 0) return callback(null);
-            files.forEach(function(file) {
-                var eventId = jsonMatch.exec(file);
-                if (eventId != null && eventId[1] + ".json" === file) {
-                    eventId = eventId[1];
-                    fs.readFile("./" + folder + "/" + file, "utf-8", function(err, data) {
-                        if (err) return callback(err);
-                        events[eventId] = JSON.parse(data); // if this fails you're dumb something bigger is wrong
-                        console.log(file + " loaded from cache");
-                        if (++count === files.length) {
-                            callback(null);
-                        }
-                    });
-                }
+
+            files.filter(function(file) {
+                test = jsonMatch.exec(file);
+                return (test != null && test[1] + ".json" === file);
             });
+            var count = 0;
+            var length = files.length;
+            if (length === 0) return callback(null);
+
+            for (var i = 0; i < length; i++) {
+                var file = files[i];
+                var eventId = jsonMatch.exec(file)[1];
+                fs.readFile("./" + folder + "/" + file, "utf-8", function(err, data) {
+                    if (err) return callback(err);
+                    events[eventId] = JSON.parse(data); // if this fails you're dumb something bigger is wrong
+                    console.log(file + " loaded from cache");
+                    if (++count === length) {
+                        return callback(null);
+                    }
+                });
+            }
         });
     });
 };
