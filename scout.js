@@ -1,6 +1,8 @@
 var express = require("express");
 var pg = require("pg").native;
 
+var whatEventIsHappeningRightNow = "2013wase";
+
 var cache = require("./tba.js");
 
 var l = function() { console.log.apply(console, arguments) };
@@ -27,14 +29,15 @@ apiServer.get("/register", function(req, res) {
 			if (err) console.log(err);
 			matchData = cache.events[eventId];
 			scoutInfo = [];
+			var teamIndex = scoutId;
+			if ([0, 1, 2, 3, 4, 5].indexOf(teamIndex) === -1) {
+				teamIndex = 1;
+			}
+			var color = ([0, 1, 2].indexOf(teamIndex) === -1) ? "blue" : "red";
+			if (color === "blue") teamIndex -= 3;
+			console.log("scout #" + (scoutId + 1) + " registered to be " + color + "[" + teamIndex + "]");
 			matchData.forEach(function(match) {
-				var team = match.team_keys[scoutId];
-				var color = "";
-				for (teamColor in match.alliances) {
-					if (match.alliances[teamColor].teams.indexOf(team) != -1) {
-						color = teamColor;
-					}
-				}
+				var team = match.alliances[color].teams[teamIndex];
 				scoutInfo.push({
 					"match_number": match.match_number,
 					"team_number": parseInt(team.substr(3), 10),
@@ -78,6 +81,10 @@ app.configure(function() {
 	// app.use(express.logger("dev"));
 	app.use("/", express.static(__dirname + "/freezing-octo-wallhack"));
 	app.use("/api", apiServer);
+	app.use("/hacks", function(req, res, next) {
+		res.type("text/javascript");
+		res.send("var eventId = \"" + whatEventIsHappeningRightNow + "\";\n");
+	});
 });
 
 var port = parseInt(process.env.PORT, 10) || 8080;

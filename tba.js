@@ -1,16 +1,15 @@
 var request = require("request");
-var qs = require("querystring");
 var fs = require("fs");
 
 var folder = "event_data";
 
 var events = module.exports.events = {};
 
-var tba = module.exports.tba = function(endpoint, options, callback) {
+var tba = module.exports.tba = function(endpoint, callback) {
     request.get({
-        "url": "http://www.thebluealliance.com/api/v1" + endpoint + "?" + qs.stringify(options), // v1 api cause v2 not done
+        "url": "http://www.thebluealliance.com/api/v2" + endpoint,
         "headers": {
-            "X-TBA-App-Id": "1983:scout-o-matic-3000:v2" // ur dumb blu alliance
+            "X-TBA-App-Id": "1983:scout-o-matic-3000:v3" // ur dumb blu alliance
         }
     }, function(err, res, body) {
         var data = (err == null) ? JSON.parse(body) : null;
@@ -19,13 +18,8 @@ var tba = module.exports.tba = function(endpoint, options, callback) {
     });
 };
 
-var getData = function(eventId, callback) {
-    tba("/event/details", { "event": eventId }, function(err, eventData) {
-        if (err) return callback(err, null);
-        tba("/match/details", { "matches": eventData.matches.join(",") }, function(err, matchData) {
-            return callback(err, matchData);
-        });
-    });
+var getMatchesData = function(eventId, callback) {
+    tba("/event/" + eventId + "/matches", callback);
 };
 
 var makeTheDirAlready = function(dirname, callback) {
@@ -45,9 +39,9 @@ var makeTheDirAlready = function(dirname, callback) {
 };
 
 var cacheData = module.exports.cacheData = function(eventId, callback) {
-    console.log("attempting to cache " + eventId);
     if (events[eventId]) return callback(null);
-    getData(eventId, function(err, data) {
+    console.log("attempting to cache " + eventId);
+    getMatchesData(eventId, function(err, data) {
         console.log("got data for " + eventId);
         events[eventId] = data; // do this early
         if (err) return callback(err);
