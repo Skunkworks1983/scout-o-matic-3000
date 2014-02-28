@@ -55,6 +55,13 @@ apiServer.post("/match", function(req, res) {
 		data[prop] = JSON.parse(req.body[prop]);
 	}
 	databaseArray = [];
+	"startPosition|shootPosition|finalPosition".split("|").forEach(function(prop) {
+		var statementData = ["auto" + (prop.charAt(0).toUpperCase() + prop.slice(1)), "1", data["autonomous"][prop]["x"], data["autonomous"][prop]["y"], 0];
+		"event_id|team_number|match_number|scout_number|scout_name".split("|").forEach(function(otherProp) {
+			statementData.push(data[otherProp]);
+		});
+		databaseArray.push(statementData);
+	});
 	data.actions.forEach(function(action) {
 		statementData = [];
 		"action|value|x|y|time".split("|").forEach(function(prop) {
