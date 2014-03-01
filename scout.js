@@ -1,7 +1,7 @@
 var express = require("express");
 var pg = require("pg").native;
 
-var whatEventIsHappeningRightNow = "2013wase";
+var whatEventIsHappeningRightNow = "2014waamv";
 
 var cache = require("./tba.js");
 
