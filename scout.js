@@ -15,6 +15,14 @@ var apiServer = express();
 apiServer.configure(function() {
 	apiServer.use(express.logger("dev"));
 	apiServer.use(express.bodyParser());
+	apiServer.use(function(req, res, next) {
+		if (Object.keys(req.body) != 0) {
+			for (prop in req.body) {
+				req.body[prop] = JSON.parse(req.body[prop]);
+			}
+		}
+		next();
+	});
 	apiServer.use(express.errorHandler());
 });
 
@@ -49,11 +57,18 @@ apiServer.get("/register", function(req, res) {
 	}
 });
 
+apiServer.get("/match", function(req, res) {
+	db.query("SELECT * FROM actions WHERE scout_number = $1 AND match_number = $2 ORDER BY time", [req.query.scout_number, req.query.match_number], function(err, result) {
+		if (err) {
+			res.jsonp(err);
+		} else {
+			res.jsonp(result.rows);
+		}
+	});
+});
+
 apiServer.post("/match", function(req, res) {
-	var data = {};
-	for (prop in req.body) { // fix this
-		data[prop] = JSON.parse(req.body[prop]);
-	}
+	var data = req.body;
 	databaseArray = [];
 	"startPosition|shootPosition|finalPosition".split("|").forEach(function(prop) {
 		var statementData = ["auto" + (prop.charAt(0).toUpperCase() + prop.slice(1)), "1", data["autonomous"][prop]["x"], data["autonomous"][prop]["y"], 0];
