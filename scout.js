@@ -13,6 +13,11 @@ var db = new pg.Client(connectionString);
 var apiServer = express();
 
 apiServer.configure(function() {
+	apiServer.use(function(req, res, next) {
+		res.header("Access-Control-Allow-Origin", "*");
+		res.header("Access-Control-Allow-Headers", "X-Requested-With");
+		next();
+	});
 	apiServer.use(express.logger("dev"));
 	apiServer.use(express.bodyParser());
 	apiServer.use(function(req, res, next) {
