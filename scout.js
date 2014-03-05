@@ -76,11 +76,13 @@ apiServer.post("/match", function(req, res) {
 	var data = req.body;
 	databaseArray = [];
 	"startPosition|shootPosition|finalPosition".split("|").forEach(function(prop) {
-		var statementData = ["auto" + (prop.charAt(0).toUpperCase() + prop.slice(1)), "1", data["autonomous"][prop]["x"], data["autonomous"][prop]["y"], 0];
-		"event_id|team_number|match_number|scout_number|scout_name".split("|").forEach(function(otherProp) {
-			statementData.push(data[otherProp]);
-		});
-		databaseArray.push(statementData);
+		if (data["autonomous"][prop]["x"] !== -1 && data["autonomous"][prop]["y"] !== -1) {
+			var statementData = ["auto" + (prop.charAt(0).toUpperCase() + prop.slice(1)), "1", data["autonomous"][prop]["x"], data["autonomous"][prop]["y"], 0];
+			"event_id|team_number|match_number|scout_number|scout_name".split("|").forEach(function(otherProp) {
+				statementData.push(data[otherProp]);
+			});
+			databaseArray.push(statementData);
+		}
 	});
 	data.actions.forEach(function(action) {
 		statementData = [];
@@ -92,6 +94,7 @@ apiServer.post("/match", function(req, res) {
 		});
 		databaseArray.push(statementData);
 	});
+	console.log("Got " + databaseArray.length + " actions from scout #" + data.scout_number);
 	databaseArray.forEach(function(thing) {
 		statement = db.query({
 			"name": "insertQuery",
