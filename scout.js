@@ -109,7 +109,7 @@ var app = express();
 
 app.configure(function() {
 	// app.use(express.logger("dev"));
-	app.use("/", express.static(__dirname + "/freezing-octo-wallhack"));
+	app.use("/", express.static(__dirname + "/scout-ui"));
 	app.use("/api", apiServer);
 	app.use("/hacks", function(req, res, next) {
 		res.type("text/javascript");
