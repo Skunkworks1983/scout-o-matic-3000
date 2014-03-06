@@ -113,7 +113,7 @@ app.configure(function() {
 	app.use("/api", apiServer);
 	app.use("/hacks", function(req, res, next) {
 		res.type("text/javascript");
-		res.send("var eventId = \"" + whatEventIsHappeningRightNow + "\";\n");
+		res.send("var eventId = \"" + whatEventIsHappeningRightNow + "\";\n"); // oh the hacks
 	});
 });
 
