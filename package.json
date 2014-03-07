@@ -14,7 +14,8 @@
     "express": "~3.4.8",
     "request": "~2.33.0",
     "pg": "~2.11.1",
-    "db-migrate": "~0.6.4"
+    "db-migrate": "~0.6.4",
+    "async": "~0.2.10"
   },
   "engines": {
     "node": "0.10.x"

@@ -1,5 +1,6 @@
 var express = require("express");
 var pg = require("pg").native;
+var async = require("async");
 
 var whatEventIsHappeningRightNow = "2014waamv";
 
@@ -38,12 +39,12 @@ apiServer.get("/register", function(req, res) {
 	var eventId = req.query.event_id;
 
 	if (isNaN(scoutId) || eventId == null) {
-		res.jsonp(400, { "error": "missing number or event_id" });
+		res.jsonp(400, {"error": "missing number or event_id"});
 	} else {
-		cache.cacheData(eventId, function(err) {
-			if (err) console.log(err);
-			matchData = cache.events[eventId];
-			scoutInfo = [];
+		cache.cacheData(eventId, function(err, cachedData) { // grab data in case cache fails
+			if (err) return res.jsonp({"error": err});
+			var matchData = cachedData;
+			var scoutInfo = [];
 			var teamIndex = scoutId;
 			if ([0, 1, 2, 3, 4, 5].indexOf(teamIndex) === -1) {
 				teamIndex = 1;
@@ -65,7 +66,9 @@ apiServer.get("/register", function(req, res) {
 });
 
 apiServer.get("/match", function(req, res) {
-	db.query("SELECT * FROM actions WHERE scout_number = $1 AND match_number = $2 ORDER BY time", [req.query.scout_number, req.query.match_number], function(err, result) {
+	var statement = "SELECT * FROM actions WHERE scout_number = $1 AND match_number = $2 ORDER BY time";
+	var values = [req.query.scout_number, req.query.match_number];
+	db.query(statement, values, function(err, result) {
 		if (err) {
 			res.jsonp(err);
 		} else {
@@ -76,10 +79,10 @@ apiServer.get("/match", function(req, res) {
 
 apiServer.post("/match", function(req, res) {
 	var data = req.body;
-	databaseArray = [];
+	var databaseArray = [];
 	"startPosition|shootPosition|finalPosition".split("|").forEach(function(prop) {
-		if (data["autonomous"][prop]["x"] !== -1 && data["autonomous"][prop]["y"] !== -1) {
-			var statementData = ["auto" + (prop.charAt(0).toUpperCase() + prop.slice(1)), "1", data["autonomous"][prop]["x"], data["autonomous"][prop]["y"], 0];
+		if (data.autonomous[prop].x !== -1 && data.autonomous[prop].y !== -1) {
+			var statementData = ["auto" + (prop.charAt(0).toUpperCase() + prop.slice(1)), "1", data.autonomous[prop].x, data.autonomous[prop].y, 0];
 			"event_id|team_number|match_number|scout_number|scout_name".split("|").forEach(function(otherProp) {
 				statementData.push(data[otherProp]);
 			});
@@ -87,7 +90,7 @@ apiServer.post("/match", function(req, res) {
 		}
 	});
 	data.actions.forEach(function(action) {
-		statementData = [];
+		var statementData = [];
 		"action|value|x|y|time".split("|").forEach(function(prop) {
 			statementData.push(action[prop]);
 		});
@@ -97,14 +100,15 @@ apiServer.post("/match", function(req, res) {
 		databaseArray.push(statementData);
 	});
 	console.log("Got " + databaseArray.length + " actions from scout #" + data.scout_number);
-	databaseArray.forEach(function(thing) {
-		statement = db.query({
-			"name": "insertQuery",
-			"text": "INSERT INTO actions (action, value, x, y, time, event_id, team_number, match_number, scout_number, scout_name) VALUES ($1, $2, $3, $4, to_timestamp($5), $6, $7, $8, $9, $10)",
-			"values": thing
+	var statement = "INSERT INTO actions (action, value, x, y, time, event_id, team_number, match_number, scout_number, scout_name) VALUES ($1, $2, $3, $4, to_timestamp($5), $6, $7, $8, $9, $10)";
+	async.each(databaseArray, function(thing, callback) {
+		db.query(statement, thing, function(err, result) {
+			if (err) console.log(result);
+			callback(err);
 		});
+	}, function(err) {
+		res.jsonp({"error": err});
 	});
-	res.jsonp({"error": null});
 });
 
 var app = express();

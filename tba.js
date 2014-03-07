@@ -1,5 +1,6 @@
 var request = require("request");
 var fs = require("fs");
+var async = require("async");
 
 var folder = "event_data";
 
@@ -26,6 +27,7 @@ var makeTheDirAlready = function(dirname, callback) {
     fs.stat(dirname, function(errTheImportantOne, stat) {
         if (errTheImportantOne) {
             if (errTheImportantOne.code === "ENOENT") {
+                console.log("attempting to create " + dirname);
                 fs.mkdir("./" + dirname, function(err) {
                     return callback(err);
                 });
@@ -39,18 +41,18 @@ var makeTheDirAlready = function(dirname, callback) {
 };
 
 var cacheData = module.exports.cacheData = function(eventId, callback) {
-    if (events[eventId]) return callback(null);
+    if (events[eventId]) return callback(null, events[eventId]);
     console.log("attempting to cache " + eventId);
     getMatchesData(eventId, function(err, data) {
+        if (err) return callback(err);
         console.log("got data for " + eventId);
         events[eventId] = data; // do this early
-        if (err) return callback(err);
         makeTheDirAlready("./" + folder, function(err) {
             if (err) return callback(err);
             fs.writeFile("./" + folder + "/" + eventId + ".json", JSON.stringify(data), "utf-8", function(err) {
                 if (err) return callback(err);
                 console.log("cached " + eventId + " to " + folder + "/" + eventId + ".json");
-                return callback(null);
+                return callback(null, data);
             });
         });
     });
@@ -71,18 +73,15 @@ var loadCache = module.exports.loadCache = function(callback) {
             var length = files.length;
             if (length === 0) return callback(null);
 
-            for (var i = 0; i < length; i++) {
-                var file = files[i];
+            async.each(files, function(file, cb) {
                 var eventId = jsonMatch.exec(file)[1];
                 fs.readFile("./" + folder + "/" + file, "utf-8", function(err, data) {
-                    if (err) return callback(err);
+                    if (err) return cb(err);
                     events[eventId] = JSON.parse(data); // if this fails you're dumb something bigger is wrong
                     console.log(file + " loaded from cache");
-                    if (++count === length) {
-                        return callback(null);
-                    }
+                    cb(null);
                 });
-            }
+            }, callback);
         });
     });
 };
