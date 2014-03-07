@@ -66,10 +66,10 @@ var loadCache = module.exports.loadCache = function(callback) {
             if (err) return callback(err);
 
             files.filter(function(file) {
-                test = jsonMatch.exec(file);
+                var test = jsonMatch.exec(file);
                 return (test != null && test[1] + ".json" === file);
             });
-            var count = 0;
+
             var length = files.length;
             if (length === 0) return callback(null);
 
