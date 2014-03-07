@@ -5,7 +5,7 @@ var whatEventIsHappeningRightNow = "2014waamv";
 
 var cache = require("./tba.js");
 
-var l = function() { console.log.apply(console, arguments) };
+var l = function() { console.log.apply(console, arguments); };
 
 var connectionString = process.env.DATABASE_URL || "postgres://test:12345@localhost/actions";
 var db = new pg.Client(connectionString);
@@ -21,9 +21,11 @@ apiServer.configure(function() {
 	apiServer.use(express.logger("dev"));
 	apiServer.use(express.bodyParser());
 	apiServer.use(function(req, res, next) {
-		if (Object.keys(req.body) != 0) {
-			for (prop in req.body) {
-				req.body[prop] = JSON.parse(req.body[prop]);
+		if (Object.keys(req.body) !== 0) {
+			for (var prop in req.body) {
+				if (req.body.hasOwnProperty(prop)) {
+					req.body[prop] = JSON.parse(req.body[prop]);
+				}
 			}
 		}
 		next();

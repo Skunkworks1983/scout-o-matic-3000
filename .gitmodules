@@ -1,3 +1,4 @@
 [submodule "freezing-octo-wallhack"]
 	path = scout-ui
 	url = https://66f828d80180ec38edda5ba9cb77bd21d82e3c47:x-oauth-basic@github.com/Skunkworks1983/freezing-octo-wallhack.git
+	branch = gh-pages
