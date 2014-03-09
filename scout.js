@@ -111,6 +111,55 @@ apiServer.post("/match", function(req, res) {
 	});
 });
 
+apiServer.delete("/match", function(req, res) {
+	if (req.query.id && typeof req.query.id == "string" && req.query.id.length > 0) {
+		var statement = "DELETE FROM actions WHERE (id) = ($1)";
+		var values = [parseInt(req.query.id, 10)];
+		db.query(statement, values, function(err, result) {
+			if (err) console.log(result);
+			res.jsonp({"error": err});
+		});
+	} else {
+		res.jsonp(400, {"error": "bad request"});
+	}
+});
+
+apiServer.put("/match", function(req, res) {
+	var expectedProps = "action|value|x|y|time|event_id|team_number|match_number|scout_number|scout_name".split("|");
+	var statement = "INSERT INTO actions (action, value, x, y, time, event_id, team_number, match_number, scout_number, scout_name) VALUES ($1, $2, $3, $4, to_timestamp($5), $6, $7, $8, $9, $10)";
+	var data = req.body;
+	var keys = Object.keys(data);
+	if (keys.length === 0) {
+		data = req.query;
+		var keys = Object.keys(data);
+	}
+	if (keys.length !== 0) {
+		var valid = (keys.length === 10) && keys.reduce(function(previous, current, index, array) {
+			var test = function(t) {
+				return expectedProps.indexOf(t) !== -1;
+			};
+			if (index === 1) {
+				return (test(previous) && test(current));
+			} else {
+				return previous && test(current);
+			}
+		});
+		if (valid) {
+			values = expectedProps.map(function(prop) {
+				return data[prop];
+			});
+			db.query(statement, values, function(err, result) {
+				if (err) console.log(result);
+				res.jsonp({"error": err});
+			});
+		} else {
+			res.jsonp(400, {"error": "bad request"});
+		}
+	} else {
+		res.jsonp(400, {"error": "bad request"});
+	}
+});
+
 var app = express();
 
 app.configure(function() {
