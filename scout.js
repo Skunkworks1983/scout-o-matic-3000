@@ -2,13 +2,13 @@ var express = require("express");
 var pg = require("pg").native;
 var async = require("async");
 
-var whatEventIsHappeningRightNow = "2014waamv";
+var whatEventIsHappeningRightNow = "2014wache";
 
 var cache = require("./tba.js");
 
 var l = function() { console.log.apply(console, arguments); };
 
-var connectionString = process.env.DATABASE_URL || "postgres://test:12345@localhost/actions";
+var connectionString = process.env.DATABASE_URL || "postgres://test:12345@localhost/actions"; // nice try
 var db = new pg.Client(connectionString);
 
 var apiServer = express();
@@ -55,7 +55,11 @@ apiServer.get("/register", function(req, res) {
 			matchData.forEach(function(match) {
 				var team = match.alliances[color].teams[teamIndex];
 				scoutInfo.push({
+					"comp_level": match.comp_level,
 					"match_number": match.match_number,
+					"set_number": match.set_number,
+					"key": match.key,
+					"sort_number": ((match.match_number < 10) ? "0" + match.match_number : match.match_number) + "" + match.set_number,
 					"team_number": parseInt(team.substr(3), 10),
 					"color": color
 				});
