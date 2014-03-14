@@ -3,6 +3,7 @@ var pg = require("pg").native;
 var async = require("async");
 
 var whatEventIsHappeningRightNow = "2014wache";
+var whatEventIsHappeningRightNowName = "";
 
 var cache = require("./tba.js");
 
@@ -172,16 +173,20 @@ app.configure(function() {
 	app.use("/api", apiServer);
 	app.use("/hacks", function(req, res, next) {
 		res.type("text/javascript");
-		res.send("var eventId = \"" + whatEventIsHappeningRightNow + "\";\n"); // oh the hacks
+		res.send("var eventId = \"" + whatEventIsHappeningRightNow + "\";\nvar eventName = \"" + whatEventIsHappeningRightNowName + "\";\n"); // oh the hacks
 	});
 });
 
 var port = parseInt(process.env.PORT, 10) || 8080;
 db.connect(function(err) {
 	if (err) throw err;
-	cache.loadCache(function(err) {
+	cache.tba("/event/" + whatEventIsHappeningRightNow, function(err, res) {
 		if (err) throw err;
-		l("listening on " + port);
-		app.listen(port);
+		whatEventIsHappeningRightNowName = res.short_name;
+		cache.loadCache(function(err) {
+			if (err) throw err;
+			l("listening on " + port);
+			app.listen(port);
+		});
 	});
 });
