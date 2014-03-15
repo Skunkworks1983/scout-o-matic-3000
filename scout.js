@@ -86,13 +86,13 @@ apiServer.post("/match", function(req, res) {
 	var data = req.body;
 	var databaseArray = [];
 	"startPosition|shootPosition|finalPosition|deadBot|status|hotGoal".split("|").forEach(function(prop) {
-//		if (data.autonomous[prop].x !== -1 && data.autonomous[prop].y !== -1) {
+		if (data.autonomous[prop].x == null || data.autonomous[prop].x == null || (data.autonomous[prop].x !== -1 && data.autonomous[prop].y !== -1)) {
 			var statementData = ["auto" + (prop.charAt(0).toUpperCase() + prop.slice(1)), "1", data.autonomous[prop].x, data.autonomous[prop].y, 0];
 			"event_id|team_number|match_number|scout_number|scout_name".split("|").forEach(function(otherProp) {
 				statementData.push(data[otherProp]);
 			});
 			databaseArray.push(statementData);
-//		}
+		}
 	});
 	data.actions.forEach(function(action) {
 		var statementData = [];
