@@ -8,6 +8,17 @@ var whatEventIsHappeningRightNowName = "";
 var cache = require("./tba.js");
 
 var l = function() { console.log.apply(console, arguments); };
+var jsonParser = function(req, res, next) {
+	if (Object.keys(req.body) !== 0) {
+		for (var prop in req.body) {
+			if (req.body.hasOwnProperty(prop)) {
+				req.body[prop] = JSON.parse(req.body[prop]);
+			}
+		}
+	}
+	next();
+}
+
 
 var connectionString = process.env.DATABASE_URL || "postgres://test:12345@localhost/actions"; // nice try
 var db = new pg.Client(connectionString);
@@ -22,16 +33,7 @@ apiServer.configure(function() {
 	});
 	apiServer.use(express.logger("dev"));
 	apiServer.use(express.bodyParser());
-	apiServer.use(function(req, res, next) {
-		if (Object.keys(req.body) !== 0) {
-			for (var prop in req.body) {
-				if (req.body.hasOwnProperty(prop)) {
-					req.body[prop] = JSON.parse(req.body[prop]);
-				}
-			}
-		}
-		next();
-	});
+	apiServer.use(jsonParser);
 	apiServer.use(express.errorHandler());
 });
 
