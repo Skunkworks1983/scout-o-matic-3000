@@ -171,11 +171,14 @@ app.configure(function() {
 });
 
 var port = parseInt(process.env.PORT, 10) || 8080;
+l("connecting to db");
 db.connect(function(err) {
 	if (err) throw err;
+	l("getting event name");
 	cache.tba("/event/" + whatEventIsHappeningRightNow, function(err, res) {
 		if (err) throw err;
 		whatEventIsHappeningRightNowName = res.short_name;
+		l("loading data cache");
 		cache.loadCache(function(err) {
 			if (err) throw err;
 			l("listening on " + port);
