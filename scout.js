@@ -163,7 +163,6 @@ apiServer.put("/match", function(req, res) {
 var app = express();
 
 app.configure(function() {
-	// app.use(express.logger("dev"));
 	app.use("/", express.static(__dirname + "/scout-ui"));
 	app.use("/api", apiServer);
 	app.use("/hacks", function(req, res, next) {
@@ -174,10 +173,10 @@ app.configure(function() {
 
 var rebuildPivot = function(callback) {
 	var columnStatement = "select distinct action from actions order by action";
-	var prePivotStatement = "select match_number, team_number, action, count(action) from actions group by match_number, team_number, action order by match_number, team_number, action";
+	var prePivotStatement = "select \\'Match \\' || match_number || \\', Team \\' || team_number as rowid, action as category, count(action) as value from actions group by match_number, team_number, action order by match_number, team_number, action";
 	db.query(columnStatement, [], function(err, result) {
 		if (err) callback(err);
-		var pivotStatement = "select * from crosstab('" + prePivotStatement + "') as ct(match_number text, team_number text, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint)";
+		var pivotStatement = "select * from crosstab('" + prePivotStatement + ";') as ct(match_team text, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint)";
 		console.log(pivotStatement);
 	});
 };
