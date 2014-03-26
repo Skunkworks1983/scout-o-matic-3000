@@ -20,7 +20,8 @@
     "node": "0.10.x"
   },
   "scripts": {
-    "start": "node scout.js"
+    "start": "node scout.js",
+    "postinstall": "./node_modules/.bin/grunt deploy"
   },
   "devDependencies": {
     "grunt": "^0.4.4",
