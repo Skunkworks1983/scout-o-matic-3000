@@ -103,7 +103,7 @@ apiServer.post("/match", function(req, res) {
 	var statement = "INSERT INTO actions (action, value, x, y, time, event_id, team_number, match_number, scout_number, scout_name) VALUES ($1, $2, $3, $4, to_timestamp($5), $6, $7, $8, $9, $10)";
 	async.each(databaseArray, function(thing, callback) {
 		db.query(statement, thing, function(err, result) {
-			if (err) console.log(result);
+			if (err) console.log(err);
 			callback(err);
 		});
 	}, function(err) {
@@ -116,7 +116,7 @@ apiServer.delete("/match", function(req, res) {
 		var statement = "DELETE FROM actions WHERE (id) = ($1)";
 		var values = [parseInt(req.query.id, 10)];
 		db.query(statement, values, function(err, result) {
-			if (err) console.log(result);
+			if (err) console.log(err);
 			res.jsonp({"error": err});
 		});
 	} else {
@@ -149,7 +149,7 @@ apiServer.put("/match", function(req, res) {
 				return data[prop];
 			});
 			db.query(statement, values, function(err, result) {
-				if (err) console.log(result);
+				if (err) console.log(err);
 				res.jsonp({"error": err});
 			});
 		} else {
