@@ -19,6 +19,12 @@ var jsonParser = function(req, res, next) {
 	next();
 }
 
+var cors = function(req, res, next) {
+	res.header("Access-Control-Allow-Origin", "*");
+	res.header("Access-Control-Allow-Headers", "X-Requested-With");
+	next();
+};
+
 
 var connectionString = process.env.DATABASE_URL || "postgres://test:12345@localhost/actions"; // nice try
 var db = new pg.Client(connectionString);
@@ -26,11 +32,7 @@ var db = new pg.Client(connectionString);
 var apiServer = express();
 
 apiServer.configure(function() {
-	apiServer.use(function(req, res, next) {
-		res.header("Access-Control-Allow-Origin", "*");
-		res.header("Access-Control-Allow-Headers", "X-Requested-With");
-		next();
-	});
+	apiServer.use(cors);
 	apiServer.use(express.logger("dev"));
 	apiServer.use(express.bodyParser());
 	apiServer.use(jsonParser);
@@ -169,6 +171,16 @@ app.configure(function() {
 		res.send("var eventId = \"" + whatEventIsHappeningRightNow + "\";\nvar eventName = \"" + whatEventIsHappeningRightNowName + "\";\n"); // oh the hacks
 	});
 });
+
+var rebuildPivot = function(callback) {
+	var columnStatement = "select distinct action from actions order by action";
+	var prePivotStatement = "select match_number, team_number, action, count(action) from actions group by match_number, team_number, action order by match_number, team_number, action";
+	db.query(columnStatement, [], function(err, result) {
+		if (err) callback(err);
+		var pivotStatement = "select * from crosstab('" + prePivotStatement + "') as ct(match_number text, team_number text, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint)";
+		console.log(pivotStatement);
+	});
+};
 
 var port = parseInt(process.env.PORT, 10) || 8080;
 l("connecting to db");
