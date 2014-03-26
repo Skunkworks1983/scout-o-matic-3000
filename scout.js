@@ -17,7 +17,7 @@ var jsonParser = function(req, res, next) {
 		}
 	}
 	next();
-}
+};
 
 var cors = function(req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
@@ -131,7 +131,7 @@ apiServer.put("/match", function(req, res) {
 	var keys = Object.keys(data);
 	if (keys.length === 0) {
 		data = req.query;
-		var keys = Object.keys(data);
+		keys = Object.keys(data);
 	}
 	if (keys.length !== 0) {
 		var valid = (keys.length === 10) && keys.reduce(function(previous, current, index, array) {
