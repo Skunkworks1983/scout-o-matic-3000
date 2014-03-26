@@ -162,12 +162,14 @@ apiServer.put("/match", function(req, res) {
 
 var app = express();
 
+var serveDir = __dirname + "/scout-ui" + (process.env.NODE_ENV === "production" ? "/minified" : "");
 app.configure(function() {
-	app.use("/", express.static(__dirname + "/scout-ui"));
+	app.use("/", express.static(serveDir));
+	app.use("/img", express.static(__dirname + "/scout-ui/img")); // hacks for minification
 	app.use("/api", apiServer);
 	app.use("/hacks", function(req, res, next) {
 		res.type("text/javascript");
-		res.send("var eventId = \"" + whatEventIsHappeningRightNow + "\";\nvar eventName = \"" + whatEventIsHappeningRightNowName + "\";\n"); // oh the hacks
+		res.send("var eventId=\"" + whatEventIsHappeningRightNow + "\";var eventName=\"" + whatEventIsHappeningRightNowName + "\";"); // oh the hacks
 	});
 });
 
@@ -193,6 +195,7 @@ db.connect(function(err) {
 		cache.loadCache(function(err) {
 			if (err) throw err;
 			l("listening on " + port);
+			l("serving " + serveDir);
 			app.listen(port);
 		});
 	});
