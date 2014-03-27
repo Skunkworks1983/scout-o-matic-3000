@@ -13,5 +13,5 @@ exports.up = function(db, next) {
 };
 
 exports.down = function(db, next) {
-    db.dropTable("actions", next);
+    db.dropTable("fouls", next);
 };
