@@ -3,7 +3,7 @@ var type = dbm.dataType;
 
 exports.up = function(db, next) {
     db.createTable("tags", {
-        "id": { "type": "int", "primaryKey": true, "autoIncrement": true },
+        "tag_id": { "type": "int", "primaryKey": true, "autoIncrement": true },
         "comment_id": "int",
         "text": "string"
     }, next);
