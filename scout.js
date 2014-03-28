@@ -182,7 +182,7 @@ var rebuildPivot = function(callback) {
 		var deleteStatement = "drop table pivot_thing";
 		var pivotStatement = "select * from crosstab('" + prePivotStatement + ";') as ct(match_team text, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint)";
 		var createStatement = "create table pivot_thing (match_team text, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint)";
-		db.query(deleteStatement;, [], function(err, otherResult) {
+		db.query(deleteStatement, [], function(err, otherResult) {
 			console.log(err);
 			if (err) callback(err);
 			db.query(createStatement, [], function(err, wowResult) {
