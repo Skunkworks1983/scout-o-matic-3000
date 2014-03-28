@@ -107,7 +107,9 @@ apiServer.post("/match", function(req, res) {
 			callback(err);
 		});
 	}, function(err) {
-		rebuildPivot();
+		rebuildPivot(function(err) {
+			console.log(err);
+		});
 		res.jsonp({"error": err});
 	});
 });
@@ -167,6 +169,7 @@ var serveDir = __dirname + "/scout-ui" + (process.env.NODE_ENV === "production" 
 app.configure(function() {
 	app.use("/", express.static(serveDir));
 	app.use("/img", express.static(__dirname + "/scout-ui/img")); // hacks for minification
+	app.use("/qa", express.static(__dirname + "/scout-ui/qa"));
 	app.use("/api", apiServer);
 	app.use("/hacks", function(req, res, next) {
 		res.type("text/javascript");
@@ -180,7 +183,7 @@ var rebuildPivot = function(callback) {
 	db.query(columnStatement, [], function(err, result) {
 		if (err) callback(err);
 		var deleteStatement = "drop table pivot_thing";
-		var pivotStatement = "select * from crosstab('" + prePivotStatement + ";') as ct(match_team text, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint)";
+		var pivotStatement = "select * from crosstab(E'" + prePivotStatement + ";') as ct(match_team text, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint)";
 		var createStatement = "create table pivot_thing (match_team text, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint)";
 		db.query(deleteStatement, [], function(err, otherResult) {
 			console.log(err);
@@ -188,6 +191,7 @@ var rebuildPivot = function(callback) {
 			db.query(createStatement, [], function(err, wowResult) {
 				console.log(err);
 				if (err) callback(err);
+				console.log(pivotStatement);
 				db.query(pivotStatement, [], function(err, thirdResult) {
 					console.log(err);
 					if (err) callback(err);
