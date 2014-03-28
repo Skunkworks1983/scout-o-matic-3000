@@ -183,7 +183,7 @@ var rebuildPivot = function(callback) {
 	db.query(columnStatement, [], function(err, result) {
 		if (err) callback(err);
 		var deleteStatement = "drop table pivot_thing";
-		var pivotStatement = "insert into pivot_thing (match_team, " + result.rows.map(function(x) { return x.action; }).join(", ") + ") (select * from crosstab(E'" + prePivotStatement + ";') as ct(match_team text, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint))";
+		var pivotStatement = "insert into pivot_thing (match_team, " + result.rows.map(function(x) { return x.action; }).join(", ") + ") (select * from crosstab(E'" + prePivotStatement + ";', '" + columnStatement + "') as ct(match_team text, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint))";
 		var createStatement = "create table pivot_thing (match_team text, match_number integer, team_number integer, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint)";
 		var updateStatement = "update pivot_thing set match_number = split_part(match_team, ',', 1)::integer, team_number = split_part(match_team, ',', 2)::integer"; 
 		db.query(deleteStatement, [], function(err, otherResult) {
