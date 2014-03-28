@@ -107,6 +107,7 @@ apiServer.post("/match", function(req, res) {
 			callback(err);
 		});
 	}, function(err) {
+		rebuildPivot();
 		res.jsonp({"error": err});
 	});
 });
