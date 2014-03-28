@@ -178,8 +178,18 @@ var rebuildPivot = function(callback) {
 	var prePivotStatement = "select \\'Match \\' || match_number || \\', Team \\' || team_number as rowid, action as category, count(action) as value from actions group by match_number, team_number, action order by match_number, team_number, action";
 	db.query(columnStatement, [], function(err, result) {
 		if (err) callback(err);
+		var deleteStatement = "drop table pivot_thing";
 		var pivotStatement = "select * from crosstab('" + prePivotStatement + ";') as ct(match_team text, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint)";
-		console.log(pivotStatement);
+		var createStatement = "create table pivot_thing (match_team text, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint)";
+		db.query(deleteStatement + "; " + createStatement, [], function(err, otherResult) {
+			console.log(err);
+			if (err) callback(err);
+			db.query(pivotStatement, [], function(err, thirdResult) {
+				console.log(err);
+				if (err) callback(err);
+				console.log(thirdResult.rows);
+			});
+		});
 	});
 };
 
