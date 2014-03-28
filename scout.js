@@ -77,7 +77,7 @@ apiServer.get("/register", function(req, res) {
 var annoying = { // last field is ignored for select
     "tags": ["comment_id", "text"],
     "fouls": ["event_id", "team_number", "match_number", "scout_number", "foul"],
-    "comments": ["event_id", "team_number", "match_number", "scout_number", "comment"],
+    "comments": ["event_id", "team_number", "match_number", "scout_number", "comment_id", "comment"],
 };
 
 Object.keys(annoying).forEach(function(table) {
