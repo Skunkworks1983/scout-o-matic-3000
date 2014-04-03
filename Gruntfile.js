@@ -4,6 +4,9 @@ module.exports = function(grunt) {
 
         "jshint": {
             "options": {
+                "eqeqeq": true,
+                "latedef": true,
+                "quotmark": true,
                 "eqnull": true,
                 "expr": true
             },

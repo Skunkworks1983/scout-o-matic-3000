@@ -128,7 +128,7 @@ Object.keys(annoying).forEach(function(table) {
     });
 
     apiServer.delete("/" + table, function(req, res) {
-        if (req.query.id && typeof req.query.id == "string" && req.query.id.length > 0) {
+        if (req.query.id && typeof req.query.id === "string" && req.query.id.length > 0) {
             var values = [parseInt(req.query.id, 10)];
             db.query(deleteStatement, values, function(err, result) {
                 if (err) console.error(err);
@@ -151,6 +151,32 @@ apiServer.get("/match", function(req, res) {
         }
     });
 });
+
+var rebuildPivot = function(callback) {
+    var columnStatement = "select distinct action from actions order by action";
+    var prePivotStatement = "select match_number || \\',\\' || team_number as rowid, action as category, count(action) as value from actions where scout_number != 7 group by match_number, team_number, action order by match_number, team_number, action";
+    db.query(columnStatement, [], function(err, result) {
+        if (err) callback(err);
+        var deleteStatement = "drop table pivot_thing";
+        var pivotStatement = "insert into pivot_thing (match_team, " + result.rows.map(function(x) { return x.action; }).join(", ") + ") (select * from crosstab(E'" + prePivotStatement + ";', '" + columnStatement + "') as ct(match_team text, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint))";
+        var createStatement = "create table pivot_thing (match_team text, match_number integer, team_number integer, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint)";
+        var updateStatement = "update pivot_thing set match_number = split_part(match_team, ',', 1)::integer, team_number = split_part(match_team, ',', 2)::integer";
+        db.query(deleteStatement, [], function(err, otherResult) {
+            if (err) { console.error(err); callback(err); }
+            db.query(createStatement, [], function(err, wowResult) {
+                if (err) { console.error(err); callback(err); }
+                l("running this monstrosity of a query:", pivotStatement);
+                db.query(pivotStatement, [], function(err, thirdResult) {
+                    if (err) { console.error(err); callback(err); }
+                    db.query(updateStatement, [], function(err, amazingResult) {
+                        if (err) { console.error(err); callback(err); }
+                        l(amazingResult.rows);
+                    });
+                });
+            });
+        });
+    });
+};
 
 apiServer.post("/match", function(req, res) {
     var data = req.body;
@@ -186,7 +212,7 @@ apiServer.post("/match", function(req, res) {
 });
 
 apiServer.delete("/match", function(req, res) {
-    if (req.query.id && typeof req.query.id == "string" && req.query.id.length > 0) {
+    if (req.query.id && typeof req.query.id === "string" && req.query.id.length > 0) {
         var statement = "DELETE FROM actions WHERE (id) = ($1)";
         var values = [parseInt(req.query.id, 10)];
         db.query(statement, values, function(err, result) {
@@ -247,32 +273,6 @@ app.configure(function() {
         res.send("var eventId=\"" + whatEventIsHappeningRightNow + "\";var eventName=\"" + whatEventIsHappeningRightNowName + "\";"); // oh the hacks
     });
 });
-
-var rebuildPivot = function(callback) {
-    var columnStatement = "select distinct action from actions order by action";
-    var prePivotStatement = "select match_number || \\',\\' || team_number as rowid, action as category, count(action) as value from actions where scout_number != 7 group by match_number, team_number, action order by match_number, team_number, action";
-    db.query(columnStatement, [], function(err, result) {
-        if (err) callback(err);
-        var deleteStatement = "drop table pivot_thing";
-        var pivotStatement = "insert into pivot_thing (match_team, " + result.rows.map(function(x) { return x.action; }).join(", ") + ") (select * from crosstab(E'" + prePivotStatement + ";', '" + columnStatement + "') as ct(match_team text, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint))";
-        var createStatement = "create table pivot_thing (match_team text, match_number integer, team_number integer, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint)";
-        var updateStatement = "update pivot_thing set match_number = split_part(match_team, ',', 1)::integer, team_number = split_part(match_team, ',', 2)::integer";
-        db.query(deleteStatement, [], function(err, otherResult) {
-            if (err) { console.error(err); callback(err); }
-            db.query(createStatement, [], function(err, wowResult) {
-                if (err) { console.error(err); callback(err); }
-                l("running this monstrosity of a query:", pivotStatement);
-                db.query(pivotStatement, [], function(err, thirdResult) {
-                    if (err) { console.error(err); callback(err); }
-                    db.query(updateStatement, [], function(err, amazingResult) {
-                        if (err) { console.error(err); callback(err); }
-                        l(amazingResult.rows);
-                    });
-                });
-            });
-        });
-    });
-};
 
 var port = parseInt(process.env.PORT, 10) || 8080;
 l("connecting to db");
