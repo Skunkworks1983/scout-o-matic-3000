@@ -84,7 +84,7 @@ Object.keys(annoying).forEach(function(table) {
     var cols = annoying[table];
     var selectIndex = 1, insertIndex = 1;
     var selectStatement = "select * from " + table + " where " + cols.slice(0, cols.length - 1).map(function(col) {
-        return col + " = $" + (selectIndex++); 
+        return col + " = $" + (selectIndex++);
     }).join(" AND ") + " order by id";
     var insertStatement = "insert into " + table + " (" + cols.join(", ") + ") values (" + cols.map(function(col) {
         return "$" + (insertIndex++);
@@ -107,7 +107,7 @@ Object.keys(annoying).forEach(function(table) {
             }
         });
     });
- 
+
     apiServer.post("/" + table, function(req, res) {
         var values = cols.map(function(col) {
             return req.body[col];
@@ -245,7 +245,7 @@ var rebuildPivot = function(callback) {
         var deleteStatement = "drop table pivot_thing";
         var pivotStatement = "insert into pivot_thing (match_team, " + result.rows.map(function(x) { return x.action; }).join(", ") + ") (select * from crosstab(E'" + prePivotStatement + ";', '" + columnStatement + "') as ct(match_team text, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint))";
         var createStatement = "create table pivot_thing (match_team text, match_number integer, team_number integer, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint)";
-        var updateStatement = "update pivot_thing set match_number = split_part(match_team, ',', 1)::integer, team_number = split_part(match_team, ',', 2)::integer"; 
+        var updateStatement = "update pivot_thing set match_number = split_part(match_team, ',', 1)::integer, team_number = split_part(match_team, ',', 2)::integer";
         db.query(deleteStatement, [], function(err, otherResult) {
             console.log(err);
             if (err) callback(err);
