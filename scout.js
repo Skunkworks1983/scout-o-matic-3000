@@ -109,8 +109,14 @@ Object.keys(annoying).forEach(function(table) {
     });
 
     apiServer.post("/" + table, function(req, res) {
+        var data = req.body;
+        var keys = Object.keys(data);
+        if (keys.length === 0) {
+            data = req.query;
+            keys = Object.keys(data);
+        }
         var values = cols.map(function(col) {
-            return req.body[col];
+            return data[col];
         });
         db.query(insertStatement, values, function(err, result) {
             if (err) {
@@ -148,6 +154,11 @@ apiServer.get("/match", function(req, res) {
 
 apiServer.post("/match", function(req, res) {
     var data = req.body;
+    var keys = Object.keys(data);
+    if (keys.length === 0) {
+        data = req.query;
+        keys = Object.keys(data);
+    }
     var databaseArray = [];
     data.actions.forEach(function(action) {
         var statementData = [];
