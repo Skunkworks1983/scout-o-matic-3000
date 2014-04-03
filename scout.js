@@ -56,7 +56,7 @@ apiServer.get("/register", function(req, res) {
             }
             var color = ([0, 1, 2].indexOf(teamIndex) === -1) ? "blue" : "red";
             if (color === "blue") teamIndex -= 3;
-            console.log("scout #" + (scoutId + 1) + " registered to be " + color + "[" + teamIndex + "]");
+            l("scout #" + (scoutId + 1) + " registered to be " + color + "[" + teamIndex + "]");
             matchData.forEach(function(match) {
                 var team = match.alliances[color].teams[teamIndex];
                 scoutInfo.push({
@@ -90,10 +90,10 @@ Object.keys(annoying).forEach(function(table) {
         return "$" + (insertIndex++);
     }).join(", ") + ")";
     var deleteStatement = "delete from " + table + " where id = $1";
-    console.log("C " + insertStatement);
-    console.log("R " + selectStatement);
-    console.log("U " + insertStatement);
-    console.log("D " + deleteStatement);
+    l("C ", insertStatement);
+    l("R ", selectStatement);
+    l("U ", insertStatement);
+    l("D ", deleteStatement);
 
     apiServer.get("/" + table, function(req, res) {
         var values = cols.slice(0, cols.length - 1).map(function(col) {
@@ -131,7 +131,7 @@ Object.keys(annoying).forEach(function(table) {
         if (req.query.id && typeof req.query.id == "string" && req.query.id.length > 0) {
             var values = [parseInt(req.query.id, 10)];
             db.query(deleteStatement, values, function(err, result) {
-                if (err) console.log(err);
+                if (err) console.error(err);
                 res.jsonp({"error": err});
             });
         } else {
@@ -170,16 +170,16 @@ apiServer.post("/match", function(req, res) {
         });
         databaseArray.push(statementData);
     });
-    console.log("Got " + databaseArray.length + " actions from scout #" + data.scout_number);
+    l("Got " + databaseArray.length + " actions from scout #" + data.scout_number);
     var statement = "INSERT INTO actions (action, value, x, y, time, event_id, team_number, match_number, scout_number, scout_name) VALUES ($1, $2, $3, $4, to_timestamp($5), $6, $7, $8, $9, $10)";
     async.each(databaseArray, function(thing, callback) {
         db.query(statement, thing, function(err, result) {
-            if (err) console.log(err);
+            if (err) console.error(err);
             callback(err);
         });
     }, function(err) {
         rebuildPivot(function(err) {
-            console.log(err);
+            console.error(err);
         });
         res.jsonp({"error": err});
     });
@@ -190,7 +190,7 @@ apiServer.delete("/match", function(req, res) {
         var statement = "DELETE FROM actions WHERE (id) = ($1)";
         var values = [parseInt(req.query.id, 10)];
         db.query(statement, values, function(err, result) {
-            if (err) console.log(err);
+            if (err) console.error(err);
             res.jsonp({"error": err});
         });
     } else {
@@ -223,7 +223,7 @@ apiServer.put("/match", function(req, res) {
                 return data[prop];
             });
             db.query(statement, values, function(err, result) {
-                if (err) console.log(err);
+                if (err) console.error(err);
                 res.jsonp({"error": err});
             });
         } else {
@@ -258,19 +258,15 @@ var rebuildPivot = function(callback) {
         var createStatement = "create table pivot_thing (match_team text, match_number integer, team_number integer, " + result.rows.map(function(x) { return x.action; }).join(" bigint, ") + " bigint)";
         var updateStatement = "update pivot_thing set match_number = split_part(match_team, ',', 1)::integer, team_number = split_part(match_team, ',', 2)::integer";
         db.query(deleteStatement, [], function(err, otherResult) {
-            console.log(err);
-            if (err) callback(err);
+            if (err) { console.error(err); callback(err); }
             db.query(createStatement, [], function(err, wowResult) {
-                console.log(err);
-                if (err) callback(err);
-                console.log(pivotStatement);
+                if (err) { console.error(err); callback(err); }
+                l("running this monstrosity of a query:", pivotStatement);
                 db.query(pivotStatement, [], function(err, thirdResult) {
-                    console.log(err);
-                    if (err) callback(err);
+                    if (err) { console.error(err); callback(err); }
                     db.query(updateStatement, [], function(err, amazingResult) {
-                        console.log(err);
-                        if (err) callback(err);
-                        console.log(amazingResult.rows);
+                        if (err) { console.error(err); callback(err); }
+                        l(amazingResult.rows);
                     });
                 });
             });
