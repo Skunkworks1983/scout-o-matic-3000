@@ -2,7 +2,7 @@ var express = require("express");
 var pg = require("pg").native;
 var async = require("async");
 
-var whatEventIsHappeningRightNow = "2014waahs";
+var whatEventIsHappeningRightNow = "2014pncmp";
 var whatEventIsHappeningRightNowName = "";
 
 var cache = require("./tba.js");
@@ -59,12 +59,16 @@ apiServer.get("/register", function(req, res) {
             l("scout #" + (scoutId + 1) + " registered to be " + color + "[" + teamIndex + "]");
             matchData.forEach(function(match) {
                 var team = match.alliances[color].teams[teamIndex];
+                var sortNumber = "" + match.match_number;
+                while (sortNumber.length < 3) {
+                    sortNumber = "0" + sortNumber;
+                }
                 scoutInfo.push({
                     "comp_level": match.comp_level,
                     "match_number": match.match_number,
                     "set_number": match.set_number,
                     "key": match.key,
-                    "sort_number": ((match.match_number < 10) ? "0" + match.match_number : match.match_number) + "" + match.set_number,
+                    "sort_number": sortNumber,
                     "team_number": parseInt(team.substr(3), 10),
                     "color": color
                 });
