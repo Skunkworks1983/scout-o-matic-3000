@@ -2,7 +2,7 @@ var express = require("express");
 var pg = require("pg").native;
 var async = require("async");
 
-var whatEventIsHappeningRightNow = "2014pncmp";
+var whatEventIsHappeningRightNow = "2014new";
 var whatEventIsHappeningRightNowName = "";
 
 var cache = require("./tba.js");
