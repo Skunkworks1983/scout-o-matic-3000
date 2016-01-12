@@ -7,6 +7,7 @@ var async = require("async");
  * The various helper functions are attached here too.
  * @module events
  * 
+ */
 var events = module.exports.events = {};
 
 /** 
